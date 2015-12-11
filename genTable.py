@@ -51,13 +51,17 @@ def updateSubscribeFile(blob_service, text_list):
 			subscribe_text += removeHeader(text_list[i])
 		blob_service.put_block_blob_from_text(container_name, subscribe_file, subscribe_text)
 
-def clearAll(blob_service):
-	pass
+def clearAll():
+	blob_service = BlobService(account_name, account_key)
+	blob_list = getBlobList(blob_service)
+	print blob_list
+	for blob in blob_list:
+		blob_service.delete_blob(container_name, blob)
 
 def uploadFile(blob_service, file_name):
 	blob_service.put_block_blob_from_path(container_name, file_name, file_name, max_connections=5)
 
-def main():
+def run():
 	blob_service = BlobService(account_name, account_key)
 	blob_list = getBlobList(blob_service)
 	if history_file not in blob_list:
@@ -65,20 +69,28 @@ def main():
 	if subscribe_file not in blob_list:
 		if history_file in blob_list:
 			blob_list.remove(history_file)
-			print blob_list
 		updateSubscribeFile(blob_service, blobToText(blob_service, blob_list))	
 	while True:
-		new_blob_list = getBlobList(blob_service)
-		new_blob_list.remove(history_file)
-		new_files = [file_name for file_name in new_blob_list if file_name not in blob_list]
-		print new_files
-		if new_files:
-			updateSubscribeFile(blob_service, blobToText(blob_service, new_files))
-			print 'update subscribe data'
-		else:
-			print 'nothing to update'
-		blob_list = new_blob_list
-		time.sleep(5)
+		try:
+			new_blob_list = getBlobList(blob_service)
+			new_blob_list.remove(history_file)
+			new_blob_list.remove(subscribe_file)
+			new_files = [file_name for file_name in new_blob_list if file_name not in blob_list]
+			print new_files
+			if new_files:
+				updateSubscribeFile(blob_service, blobToText(blob_service, new_files))
+				print 'update subscribe data'
+			else:
+				print 'nothing to update'
+			blob_list = new_blob_list
+		except:
+			print "network not stable"
+			pass
+		time.sleep(10)
+
+def main():
+	run()
+	# clearAll()
 
 if __name__ == '__main__':
 	main()

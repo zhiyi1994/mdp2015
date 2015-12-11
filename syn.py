@@ -11,7 +11,8 @@ def synchronize():
 	remote_files = getBlobList(blob_service)
 	upload_list = [file_name for file_name in local_files if file_name not in remote_files]
 	for file_name in upload_list:
-		blob_service.put_block_blob_from_path(container_name, file_name, 'data/'+file_name, max_connections=5)
+		if file_name[0] != '.':
+			blob_service.put_block_blob_from_path(container_name, file_name, 'data/'+file_name, max_connections=5)
 
 
 def main():
